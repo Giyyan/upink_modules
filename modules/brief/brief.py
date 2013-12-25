@@ -1,9 +1,9 @@
 # -*- encoding: utf-8 -*-
 import logging
-from openerp import tools
+from openerp.osv.osv import except_osv
 import pytz
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from openerp.osv.orm import Model
 from openerp.osv import fields
 
@@ -558,6 +558,7 @@ class BriefPartSix(Model):
             u'Укажите другие направления рекламы, которые Вы использовали ранее',
             size=256,
             help=''),
+        'count_see': fields.integer('Количество просмотров')
     }
 BriefPartSix()
 
@@ -683,6 +684,7 @@ class BriefCbThree(Model):
         'marketing_cb': fields.boolean('180_new'),
         'transfer_cb': fields.boolean('181_new'),
         'access_ids_cb': fields.boolean('182_new'),
+        'count_see_cb': fields.boolean('183'),
     }
 BriefCbThree()
 
@@ -808,6 +810,7 @@ class BriefCbrThree(Model):
         'marketing_cbr': fields.boolean('180'),
         'transfer_cbr': fields.boolean('181'),
         'access_ids_cbr': fields.boolean('182'),
+        'count_see_cbr': fields.boolean('183'),
     }
 BriefCbrThree()
 
@@ -1073,10 +1076,14 @@ class Brief(Model):
     def write(self, cr, uid, ids, values, context=None):
         if values.get('from', False):
             values['from'] = None
+
         if values.get('state', False):
             state = values.get('state', False)
             values.update({'history_ids': [
                 (0, 0, {'us_id': uid, 'cr_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'state': self.get_state(state)[1], 'state_id': state})]})
+            for record in self.browse(cr, 1, ids):
+                if state in ('media_approval', 'media_accept') and not (record.sum_mediaplan and values.get('sum_mediaplan')):
+                    raise except_osv('Бриф на просчет', 'Необходимо ввести сумму медиалпана')
         return super(Brief, self).write(cr, uid, ids, values, context)
 
     def action_cancel(self, cr, uid, ids):
@@ -1199,9 +1206,15 @@ class Brief(Model):
         if history_accept_ids:
             history_accept = history_pool.read(cr, 1, history_accept_ids, ['cr_date'])
             date_start = datetime.strptime(history_accept[0]['cr_date'].split('.')[0], "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc)
-            date_end = datetime.now(pytz.utc)
+            tmd_date = date_start + timedelta(hours=delta)
+            if tmd_date.hour > 17:
+                tmd_date += timedelta(hours=17)
 
-            if date_start + timedelta(hours=delta) < date_end:
+            wknum = date.weekday(tmd_date)
+            if wknum in (5, 6):
+                tmd_date += timedelta(days=7 - wknum)
+
+            if tmd_date < datetime.now(pytz.utc):
                 return True
         return False
 
@@ -1231,6 +1244,14 @@ class Brief(Model):
         if ids:
             self.write(cr, uid, ids, {'check_head': True})
 
+    def cron_check_long(self, cr, uid, context=None):
+        brief_ids = self.search(cr, uid, [('state', 'in', ('accept', 'inwork', 'media_accept_rev', 'media_approval_r'))])
+
+        ids = [brief['id'] for brief in self.read(cr, uid, brief_ids, ['state']) if self.check_delta(cr, brief['id'], brief['state'], delta=3)]
+
+        if ids:
+            self.write(cr, uid, ids, {'check_long': True})
+
     def cron_work_state(self, cr, uid, context=None):
         sql = """SELECT
                 b.id
@@ -1244,7 +1265,7 @@ class Brief(Model):
                 (SELECT min(cr_date)
                     FROM brief_history WHERE brief_id=b.id AND state_id = 'accept')) > interval '4 hours';"""
         cr.execute(sql)
-        res_ids = set(id[0] for id in cr.fetchall())
+        res_ids = set(brief_id[0] for brief_id in cr.fetchall())
         if res_ids:
             self.write(cr, uid, tuple(res_ids), {'work_state': 'overdue'})
 
@@ -1545,6 +1566,7 @@ class Brief(Model):
             string="Группа руководителей"
         ),
         'check_head': fields.boolean('Проверка руководителей'),
+        'check_long': fields.boolean('Проверка на срыв планов'),
     }
 
     _defaults = {
