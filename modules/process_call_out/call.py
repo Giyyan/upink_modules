@@ -183,9 +183,6 @@ class ProcessCallOut(Model):
                     if not values.get('report_ids', False) and not record['report_ids']:
                         error.append('Необходимо добавить отчеты')
 
-                if next_state == 'billing_surcharge' and (not values.get('surcharge_ids', False) and not record['surcharge_ids']):
-                    error.append('Необходимо ввести доплаты')
-
                 if error:
                     raise osv.except_osv("Исходящая кампания", ', '.join(error))
 
