@@ -361,7 +361,7 @@
                         <newline/>
 
                         <group attrs="{'invisible':[('count_see_cb','==',False)]}" colspan="4" col="4">
-                            <field name="acount_see_cb" invisible="True"/>
+                            <field name="count_see_cb" invisible="True"/>
                             <field name="count_see_cbr" invisible="True"/>
 
                             <field name="count_see"
