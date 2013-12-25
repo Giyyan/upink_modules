@@ -377,7 +377,7 @@
                                 name="development"
                                 type="workflow"
                                 icon="gtk-go-forward"
-                                states="tech_setup" />
+                                states="tech_setup,coordination_reporting" />
                                 <!--attrs="{'invisible': ['|', ('state', '!=', 'tech_setup'), ('check_m', '=', False)]}"-->
                                 <!--/>-->
                         <!-- development -> coordination_reporting -->

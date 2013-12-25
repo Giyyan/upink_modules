@@ -179,10 +179,6 @@ class ProcessCallOut(Model):
                     if not values.get('aoh', False) and not record['aoh']:
                         error.append('Необходимо ввести АОН')
 
-                if next_state == 'development':
-                    if not values.get('report_ids', False) and not record['report_ids']:
-                        error.append('Необходимо добавить отчеты')
-
                 if error:
                     raise osv.except_osv("Исходящая кампания", ', '.join(error))
 
