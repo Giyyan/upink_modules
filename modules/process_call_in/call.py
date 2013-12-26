@@ -158,10 +158,6 @@ class ProcessCallIn(Model):
                 if next_state == 'filling_template' and (not values.get('template_report_id', False) and not record['template_report_id']):
                     error.append('Необходимо добавить файл формы отчета')
 
-                if next_state == 'development':
-                    if not values.get('report_ids', False) and not record['report_ids']:
-                        error.append('Необходимо добавить отчеты')
-
                 if error:
                     raise osv.except_osv("Входящая кампания", ', '.join(error))
 

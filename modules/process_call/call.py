@@ -98,10 +98,7 @@ class ProcessCall(AbstractModel):
             'Супервайзер проекта',
             select=True,
             domain="[('groups_id','in',[103])]",
-            readonly=True,
-            states={
-                'coordination': [('readonly', False)]
-            }
+            readonly=False
         ),  # Специалист направления Call
 
         'prep_days': fields.integer('Количество рабочих дней на подготовку проекта'),
