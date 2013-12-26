@@ -1082,8 +1082,9 @@ class Brief(Model):
             values.update({'history_ids': [
                 (0, 0, {'us_id': uid, 'cr_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'state': self.get_state(state)[1], 'state_id': state})]})
             for record in self.browse(cr, 1, ids):
-                if state in ('media_approval', 'media_accept') and not (record.sum_mediaplan and values.get('sum_mediaplan')):
-                    raise except_osv('Бриф на просчет', 'Необходимо ввести сумму медиалпана')
+                if state in ('media_approval', 'media_accept'):
+                    if not record.sum_mediaplan and not values.get('sum_mediaplan'):
+                        raise except_osv('Бриф на просчет', 'Необходимо ввести сумму медиалпана')
         return super(Brief, self).write(cr, uid, ids, values, context)
 
     def action_cancel(self, cr, uid, ids):
