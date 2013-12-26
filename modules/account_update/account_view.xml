@@ -105,7 +105,7 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Счет">
-                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" attrs="{'readonly': [('states', '!=', 'draft')]}"
+                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}"
                                    context="{'type': type, 'account_id': account_id, 'description': number, 'partner_id': partner_id}" />
 
                             <group col="6" colspan="2">
