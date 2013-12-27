@@ -191,9 +191,13 @@ class AccountInvoice(Model):
         employee_pool = self.pool.get('hr.employee')
         for data in self.browse(cr, uid, ids, context):
             access = str()
+            m = False
+            employee = employee_pool.get_employee(cr, uid, uid)
+            if employee:
+                m = employee_pool.get_department_manager(cr, uid, employee.id)
 
             #  Автор + руководитель
-            if (data.user_id and data.user_id.id == uid) or employee_pool.get_department_manager(cr, uid, employee_pool.get_employee(cr, uid, uid).id).user_id.id == uid:
+            if (data.user_id and data.user_id.id == uid) or (m and m.user_id and m.user_id.id == uid):
                 access += 'a'
 
             #  Директор UpSale
