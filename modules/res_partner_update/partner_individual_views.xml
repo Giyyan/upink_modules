@@ -645,6 +645,7 @@
                             <field name="rate" widget="progressbar"/>
                             <field name="lead" attrs="{'invisible': [('check', '=', False)]}" />
                             <field name="active" attrs="{'invisible': [('check', '=', False)]}" />
+                            <field name="company_id" attrs="{'invisible': [('check', '=', False)]}" />
                             <newline/>
 
                             <field name="partner_status" />
@@ -653,7 +654,6 @@
                             <field name="categ_id" widget="selection" string="Тематика" />
                             <field name="partner_type" invisible="1"/>
 
-                            <field name="company_id" attrs="{'invisible': [('check', '=', False)]}" />
                         </group>
                         <notebook colspan="4">
                             <page string="Контакты">
