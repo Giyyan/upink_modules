@@ -1021,7 +1021,7 @@ class ResPartner(Model):
 
     def _check_access(self, cr, uid, ids, name, arg, context=None):
         flag = False
-        if uid in (1, 14):
+        if uid in (1, 14, 472):
             flag = True
         return dict([(record_id, flag) for record_id in ids])
 
@@ -1664,8 +1664,6 @@ class ResPartner(Model):
             selection=PARTNER_STATUS,
             fnct_search=_search_service_status
         ),
-
-
 
         'date_start_from': fields.date('дата начала с'),
         'date_start_to': fields.date('дата начала по'),
