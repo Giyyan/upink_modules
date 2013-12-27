@@ -104,7 +104,7 @@ class BriefContract(Model):
                     access += 's'
 
             #  БЕНЯ
-            if uid == 18:
+            if uid == 18 or uid == 472:
                 access += 'b'
 
             val = False

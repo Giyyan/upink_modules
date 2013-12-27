@@ -42,7 +42,7 @@ class ProcessLaunch(Model):
                 access += 'a'
 
             #  Бекетова Катя
-            if uid == 14:
+            if uid:
                 access += 'm'
 
             val = False

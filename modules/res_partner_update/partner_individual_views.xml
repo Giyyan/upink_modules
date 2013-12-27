@@ -653,6 +653,7 @@
                             <field name="categ_id" widget="selection" string="Тематика" />
                             <field name="partner_type" invisible="1"/>
 
+                            <field name="company_id" attrs="{'invisible': [('check', '=', False)]}" />
                         </group>
                         <notebook colspan="4">
                             <page string="Контакты">
@@ -1326,6 +1327,8 @@
                             <button name="to_partner" type="object" string="Создать партнера" icon="gtk-ok" />
                             <newline />
                             <field name="active" attrs="{'invisible': [('check', '=', False)]}" />
+
+                            <field name="company_id" attrs="{'invisible': [('check', '=', False)]}" />
                         </group>
                         <notebook colspan="4">
                             <page string="Контакты">
