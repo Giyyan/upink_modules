@@ -193,7 +193,7 @@ class AccountInvoice(Model):
             access = str()
 
             #  Автор + руководитель
-            if data.user_id.id == uid or employee_pool.get_department_manager(cr, uid, employee_pool.get_employee(cr, uid, uid).id).user_id.id == uid:
+            if (data.user_id and data.user_id.id == uid) or employee_pool.get_department_manager(cr, uid, employee_pool.get_employee(cr, uid, uid).id).user_id.id == uid:
                 access += 'a'
 
             #  Директор UpSale
