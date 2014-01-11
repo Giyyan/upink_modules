@@ -3,8 +3,8 @@ import psycopg2
 
 # conn_string = "host='217.12.219.143' dbname='zombieland' user='wichita' password='vjq1gfhjkm'"
 # conn_string = "host='217.12.219.143' dbname='mask' user='stanley_ipkiss' password='vjq1gfhjkm'"
-conn_string = "host='217.12.219.143' dbname='number_23' user='fingerling' password='vjq1gfhjkm'"
-# conn_string = "host='46.28.67.221' dbname='die_hard' user='john_mcclane' password='vjq1gfhjkm'"
+# conn_string = "host='217.12.219.143' dbname='number_23' user='fingerling' password='vjq1gfhjkm'"
+conn_string = "host='46.28.67.221' dbname='die_hard' user='john_mcclane' password='vjq1gfhjkm'"
 conn = psycopg2.connect(conn_string)
 
 cursor = conn.cursor()
@@ -51,7 +51,7 @@ cursor = conn.cursor()
 #
 # cursor.execute('UPDATE res_partner SET company_id=%s WHERE id in %s;', (call_id, tuple(kirja)))
 # cursor.execute('UPDATE res_partner SET company_id=%s WHERE id in %s;', (ppc_id, tuple(benja)))
-#
+
 #
 # # cursor.execute("SELECT domain_force FROM ir_rule WHERE model_id in (SELECT id FROM ir_model WHERE model in ('res.partner', 'brief.main', 'brief.contract', 'brief.meeting', 'account.invoice', 'task', 'kpi.kpi', 'kpi.smart', 'process.launch', 'help.desk'));")
 # # cursor.execute("SELECT domain_force, id FROM ir_rule WHERE model_id in (SELECT id FROM ir_model WHERE model in ('res.partner', 'hr.employee', 'res.users'));")
@@ -92,79 +92,115 @@ cursor = conn.cursor()
 # # cursor.execute("UPDATE res_users SET company_id=4 WHERE company_id=1)")
 # # cursor.execute("UPDATE hr_employee SET company_id=4 WHERE company_id=1)")
 
-cursor.execute("SELECT array_agg(id), name, array_agg(company_id) FROM res_partner WHERE company_id in (SELECT id FROM res_company WHERE name in ('CALL', 'PPC')) GROUP BY name HAVING count(id) > 1;;")
+# name in ('optimastroy.com', 'orgprint.ru', 'premiummart.com', 'home shopping russia') AND
+cursor.execute("SELECT array_agg(id), name, array_agg(company_id) FROM res_partner WHERE company_id in (SELECT id FROM res_company WHERE name in ('CALL', 'PPC')) GROUP BY name HAVING count(id) > 1;")
 for record in cursor.fetchall():
+    print(record[1])
     partner_ids = record[0]
     sorted(partner_ids)
-    cursor.execute("SELECT id, partner_id, create_uid, create_date, write_date, write_uid, fax, street2, phone, street, active, city, name, zip, title, mobile, country_id, company_id, birthdate, state_id, type, email, partner_site, partner_site_two, email_two, yahoo, gg, skype, msn, icq, country_ec, state_ec, function, color, main_face, fax_e164, mobile_e164, phone_e164 FROM res_partner_address WHERE partner_id=%s;", partner_ids[0])
-    for address in cursor.fetchall():
-        new_address = address[2:]
-        new_address.append(partner_ids[1])
-        cursor.execute("""INSERT INTO res_partner_address
-            (create_uid, create_date, write_date, write_uid, fax, street2, phone, street, active, city, name, zip, title, mobile, country_id, company_id, birthdate, state_id, type, email, partner_site, partner_site_two, email_two, yahoo, gg, skype, msn, icq, country_ec, state_ec, function, color, main_face, fax_e164, mobile_e164, phone_e164, partner_id)
-            VALUES
-            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""", new_address)
+
+    print(partner_ids[0])
+    print(partner_ids[1])
+    old_partner = min(partner_ids)
+    new_partner = max(partner_ids)
+
+    print(old_partner)
+    print(new_partner)
+
+    cursor.execute("SELECT id, create_uid, create_date, write_date, write_uid, city, zip, sequence, country_id, state, street, state_id, current_account, bik, ogrn, inn, ogrnip, kpp, fullname, correspondent_account, type, phone, fio_gen, name, fio_zam, address_registration, passport, document, fax, site, okpo, email, bank_name, owner_name, bank_bic, footer, company_id, journal_id, bank_acc_corr, mfo, bank FROM res_partner_bank WHERE partner_id=%s", (old_partner,))
+    for bank in cursor.fetchall():
+        print(bank[0])
+        new_bank = list(bank[1:])
+        new_bank.append(new_partner)
+        cursor.execute("""INSERT INTO res_partner_bank
+             (create_uid, create_date, write_date, write_uid, city, zip, sequence, country_id, state, street, state_id, current_account, bik, ogrn, inn, ogrnip, kpp, fullname, correspondent_account, type, phone, fio_gen, name, fio_zam, address_registration, passport, document, fax, site, okpo, email, bank_name, owner_name, bank_bic, footer, company_id, journal_id, bank_acc_corr, mfo, bank, partner_id)
+             VALUES
+             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""", new_bank)
 
         new_id = cursor.fetchone()[0]
+        cursor.execute("SELECT create_uid, create_date, write_date, write_uid, index, name, city, house, housing, flat, street, flat_type, building, st_type FROM res_partner_bank_address WHERE bank_id=%s", (bank[0],))
+        for bank_address in cursor.fetchall():
+            new_bank_address = list(bank_address[:])
+            new_bank_address.append(new_id)
+            print("Bank address: %s" % bank_address[5])
 
-        cursor.execute("SELECT phone_type, phone_for_search, phone FROM tel_reference WHERE partner_address_id=%s", address[0])
-        for phone in cursor.fetchall():
-            new_phone = phone[:]
-            new_phone.extend(partner_ids[1], new_id)
-            cursor.execute("""INSERT INTO tel_reference (phone_type, phone_for_search, phone, res_partner_id, partner_address_id)
-            VALUES
-             (%s, %s, %s, %s, %s)""", new_phone)
+            cursor.execute("""INSERT INTO res_partner_bank_address
+             (create_uid, create_date, write_date, write_uid, index, name, city, house, housing, flat, street, flat_type, building, st_type, bank_id)
+             VALUES
+             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", new_bank_address)
 
-        cursor.execute("SELECT name FROM res_partner_address_email WHERE address_id=%s", address[0])
-        for item in cursor.fetchall():
-            cursor.execute("""INSERT INTO res_partner_address_email (name, address_id)
-            VALUES
-             (%s, %s)""", (item, new_id))
-
-        cursor.execute("SELECT name FROM res_partner_address_icq WHERE address_id=%s", address[0])
-        for item in cursor.fetchall():
-            cursor.execute("""INSERT INTO res_partner_address_icq (name, address_id)
-            VALUES
-             (%s, %s)""", (item, new_id))
-
-        cursor.execute("SELECT name FROM res_partner_address_site WHERE address_id=%s", address[0])
-        for item in cursor.fetchall():
-            cursor.execute("""INSERT INTO res_partner_address_site (name, address_id)
-            VALUES
-             (%s, %s)""", (item, new_id))
-
-        cursor.execute("SELECT name FROM res_partner_address_skype WHERE address_id=%s", address[0])
-        for item in cursor.fetchall():
-            cursor.execute("""INSERT INTO res_partner_address_skype (name, address_id)
-            VALUES
-             (%s, %s)""", (item, new_id))
-
-    cursor.execute('SELECT create_uid, create_date, write_date, write_uid, name, user_id FROM transfer_history WHERE partner_id=%s', partner_ids[0])
-    for transfer in cursor.fetchall():
-        new_transfer = transfer[:]
-        new_transfer.append(partner_ids[1])
-        cursor.execute("""INSERT INTO transfer_history (create_uid, create_date, write_date, write_uid, name, user_id, partner_id)
-            VALUES
-             (%s, %s, %s, %s, %s, %s, %s)""", new_transfer)
-
-    cursor.execute('SELECT create_uid, create_date, write_date, write_uid, name, user_id, title, type FROM crm_lead_notes WHERE partner_id=%s', partner_ids[0])
-    for note in cursor.fetchall():
-        new_note = note[:]
-        new_note.append(partner_ids[1])
-        cursor.execute("""INSERT INTO crm_lead_notes (create_uid, create_date, write_date, write_uid, name, user_id, title, type, partner_id)
-            VALUES
-             (%s, %s, %s, %s, %s, %s, %s, %s, %s)""", new_note)
-
-    cursor.execute('SELECT create_uid, create_date, write_date, write_uid, date_closed, active, description, canal_id, date_action_last, partner_address_id, section_id, date, state, partner_mobile, date_action_next, user_id, name, date_open, categ_id, company_id, priority, partner_phone, opportunity_id, email_from, time_of_coll, id_ast_coll, duration, id_sphone FROM crm_phonecall WHERE partner_id=%s', partner_ids[0])
-    for call in cursor.fetchall():
-        new_call = call[:]
-        new_call.append(partner_ids[1])
-        cursor.execute("""INSERT INTO crm_phonecall
-        (create_uid, create_date, write_date, write_uid, date_closed, active, description, canal_id, date_action_last, partner_address_id, section_id, date, state, partner_mobile, date_action_next, user_id, name, date_open, categ_id, company_id, priority, partner_phone, opportunity_id, email_from, time_of_coll, id_ast_coll, duration, id_sphone, partner_id)
-            VALUES
-             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", new_call)
-
-
+    # cursor.execute("SELECT id, partner_id, create_uid, create_date, write_date, write_uid, street2, street, active, city, name, zip, title, country_id, company_id, birthdate, country_ec, state_ec, function, color, main_face FROM res_partner_address WHERE partner_id=%s;", (old_partner,))
+    # for address in cursor.fetchall():
+    #     new_address = list(address[2:])
+    #     new_address.append(new_partner)
+    #     cursor.execute("""INSERT INTO res_partner_address
+    #         (create_uid, create_date, write_date, write_uid, street2, street, active, city, name, zip, title, country_id, company_id, birthdate, country_ec, state_ec, function, color, main_face, partner_id)
+    #         VALUES
+    #         (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""", new_address)
+    #
+    #     new_id = cursor.fetchone()[0]
+    #     print("New address id: %s" % new_id)
+    #
+    #     cursor.execute("SELECT phone_type, phone_for_search, phone FROM tel_reference WHERE partner_address_id=%s", (address[0],))
+    #     for phone in cursor.fetchall():
+    #         print("New phone: %s" % phone[2])
+    #         new_phone = list(phone[:])
+    #         new_phone.extend([partner_ids[1], new_id])
+    #         cursor.execute("""INSERT INTO tel_reference (phone_type, phone_for_search, phone, res_partner_id, partner_address_id)
+    #         VALUES
+    #          (%s, %s, %s, %s, %s)""", new_phone)
+    #
+    #     cursor.execute("SELECT name FROM res_partner_address_email WHERE address_id=%s", (address[0],))
+    #     for item in cursor.fetchall():
+    #         cursor.execute("""INSERT INTO res_partner_address_email (name, address_id)
+    #         VALUES
+    #          (%s, %s)""", (item, new_id))
+    #
+    #     cursor.execute("SELECT name FROM res_partner_address_icq WHERE address_id=%s", (address[0],))
+    #     for item in cursor.fetchall():
+    #         cursor.execute("""INSERT INTO res_partner_address_icq (name, address_id)
+    #         VALUES
+    #          (%s, %s)""", (item, new_id))
+    #
+    #     cursor.execute("SELECT name FROM res_partner_address_site WHERE address_id=%s", (address[0],))
+    #     for item in cursor.fetchall():
+    #         cursor.execute("""INSERT INTO res_partner_address_site (name, address_id)
+    #         VALUES
+    #          (%s, %s)""", (item, new_id))
+    #
+    #     cursor.execute("SELECT name FROM res_partner_address_skype WHERE address_id=%s", (address[0],))
+    #     for item in cursor.fetchall():
+    #         cursor.execute("""INSERT INTO res_partner_address_skype (name, address_id)
+    #         VALUES
+    #          (%s, %s)""", (item, new_id))
+    #
+    # cursor.execute(
+    #     "SELECT create_uid, create_date, write_date, write_uid, name, user_id FROM transfer_history WHERE partner_id=%s", (old_partner,))
+    # for transfer in cursor.fetchall():
+    #     new_transfer = list(transfer[:])
+    #     new_transfer.append(new_partner)
+    #     cursor.execute("""INSERT INTO transfer_history (create_uid, create_date, write_date, write_uid, name, user_id, partner_id)
+    #         VALUES
+    #          (%s, %s, %s, %s, %s, %s, %s)""", new_transfer)
+    #
+    # cursor.execute(
+    #     "SELECT create_uid, create_date, write_date, write_uid, name, user_id, title, type FROM crm_lead_notes WHERE partner_id=%s", (old_partner,))
+    # for note in cursor.fetchall():
+    #     new_note = list(note[:])
+    #     new_note.append(new_partner)
+    #     cursor.execute("""INSERT INTO crm_lead_notes (create_uid, create_date, write_date, write_uid, name, user_id, title, type, partner_id)
+    #         VALUES
+    #          (%s, %s, %s, %s, %s, %s, %s, %s, %s)""", new_note)
+    #
+    # cursor.execute(
+    #     "SELECT create_uid, create_date, write_date, write_uid, date_closed, active, description, canal_id, date_action_last, partner_address_id, section_id, date, state, partner_mobile, date_action_next, user_id, name, date_open, categ_id, company_id, priority, partner_phone, opportunity_id, email_from, time_of_coll, id_ast_coll, duration, id_sphone FROM crm_phonecall WHERE partner_id=%s", (old_partner,))
+    # for call in cursor.fetchall():
+    #     new_call = list(call[:])
+    #     new_call.append(new_partner)
+    #     cursor.execute("""INSERT INTO crm_phonecall
+    #     (create_uid, create_date, write_date, write_uid, date_closed, active, description, canal_id, date_action_last, partner_address_id, section_id, date, state, partner_mobile, date_action_next, user_id, name, date_open, categ_id, company_id, priority, partner_phone, opportunity_id, email_from, time_of_coll, id_ast_coll, duration, id_sphone, partner_id)
+    #         VALUES
+    #          (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", new_call)
 
 conn.commit()
 cursor.close()
